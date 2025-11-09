@@ -1,250 +1,53 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web Microcontroller IDE</title>
-
-  <!-- CodeMirror -->
-  <link rel="stylesheet" href="https://unpkg.com/codemirror@5.65.15/lib/codemirror.css">
-  <script src="https://unpkg.com/codemirror@5.65.15/lib/codemirror.js"></script>
-  <script src="https://unpkg.com/codemirror@5.65.15/mode/clike/clike.js"></script>
-  <script src="https://unpkg.com/codemirror@5.65.15/mode/properties/properties.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      background-color: #1e1e1e;
-      color: #ddd;
-      font-family: "Segoe UI", sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    header {
-      background: #333;
-      padding: 10px 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: white;
-    }
-
-    .toolbar button {
-      margin-right: 10px;
-      background: #007acc;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-
-    .toolbar button:hover {
-      background: #008cff;
-    }
-
-    .tab-bar {
-      background: #2d2d2d;
-      display: flex;
-      border-bottom: 1px solid #444;
-    }
-
-    .tab {
-      padding: 8px 15px;
-      cursor: pointer;
-      border-right: 1px solid #444;
-      background: #2d2d2d;
-      color: #bbb;
-    }
-
-    .tab.active {
-      background: #1e1e1e;
-      color: #fff;
-      font-weight: bold;
-    }
-
-    #editor {
-      flex: 1;
-    }
-
-    footer {
-      background: #222;
-      padding: 8px 15px;
-      font-size: 0.9em;
-      color: #bbb;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Web PlatformIO Editor</title>
+<style>
+  body { font-family: sans-serif; padding: 1em; }
+  textarea { width: 100%; height: 300px; font-family: monospace; }
+  button { margin-top: 10px; }
+</style>
 </head>
 <body>
-  <header>
-    <div>🧠 Web Microcontroller IDE</div>
-    <div class="toolbar">
-      <button id="newBtn">新規</button>
-      <button id="saveBtn">保存</button>
-      <button id="uploadBtn">コンパイル</button>
-      <button id="flashBtn">書き込み</button>
-    </div>
-  </header>
 
-  <!-- タブバー -->
-  <div class="tab-bar" id="tabBar">
-    <div class="tab active" data-file="sketch.cpp">sketch.cpp</div>
-    <div class="tab" data-file="platformio.ini">platformio.ini</div>
-  </div>
+<h2>Web PlatformIO Editor</h2>
+<textarea id="code">// src/main.cpp の内容をここに書く</textarea><br>
+<button id="buildBtn">コンパイルを実行</button>
 
-  <div id="editor"></div>
+<pre id="log"></pre>
 
-  <footer>
-    <span id="status">準備完了</span>
-  </footer>
+<script>
+const GITHUB_USER = "kuromamekuromame88";
+const REPO_NAME = "api-action-compiler";
 
-  <script>
-    // 各ファイルの内容
-    const files = {
-      "sketch.cpp": `#include <Arduino.h>
+document.getElementById("buildBtn").onclick = async () => {
+  const log = document.getElementById("log");
+  log.textContent = "ビルドを開始します...\n";
 
-void setup() {
-  Serial.begin(115200);
-}
-
-void loop() {
-  Serial.println("Hello, PlatformIO!");
-  delay(1000);
-}`,
-      "/*ボードIDはこちらのURLから調べられます→https://docs.platformio.org/en/latest/boards/index.html*/\nplatformio.ini": `[env:esp32-s3-devkitc-1]
-platform = espressif32
-board = esp32-s3-devkitc-1
-framework = arduino
-upload_speed = 921600
-monitor_speed = 115200`
-    };
-
-    let currentFile = "sketch.cpp";
-
-    // CodeMirror初期化
-    const editor = CodeMirror(document.getElementById("editor"), {
-      value: files[currentFile],
-      mode: "text/x-c++src",
-      lineNumbers: true,
-      theme: "default",
-      tabSize: 2,
-    });
-
-    // タブ切り替え処理
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.addEventListener("click", () => {
-        // 現在のエディタ内容を保存
-        files[currentFile] = editor.getValue();
-
-        // 新しいタブをアクティブに
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-
-        currentFile = tab.dataset.file;
-        editor.setValue(files[currentFile]);
-        editor.setOption("mode", currentFile.endsWith(".ini") ? "text/x-properties" : "text/x-c++src");
-        setStatus(`${currentFile} を編集中`);
-      });
-    });
-
-    // 新規ボタン
-    document.getElementById("newBtn").onclick = () => {
-      if (confirm("新しいスケッチを作成しますか？")) {
-        files["sketch.cpp"] = "#include <Arduino.h>\n\nvoid setup() {\n}\n\nvoid loop() {\n}";
-        editor.setValue(files[currentFile]);
-        setStatus("新しいスケッチを作成しました");
-      }
-    };
-
-    // 保存ボタン
-    document.getElementById("saveBtn").onclick = () => {
-      files[currentFile] = editor.getValue();
-      const zipContent = {
-        "sketch.cpp": files["sketch.cpp"],
-        "platformio.ini": files["platformio.ini"]
-      };
-
-      // 2ファイルをまとめてzip化
-      const zip = new JSZip();
-      for (const [name, content] of Object.entries(zipContent)) {
-        zip.file(name, content);
-      }
-      zip.generateAsync({ type: "blob" }).then(blob => {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "project.zip";
-        a.click();
-      });
-      setStatus("保存しました（ZIP）");
-    };
-    
-    function setStatus(text) {
-      document.getElementById("status").textContent = text;
-    }
-
-    // JSZipを読み込み
-    const jszipScript = document.createElement("script");
-    jszipScript.src = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
-    document.head.appendChild(jszipScript);
-
-
-    
-async function compileProject() {
-  files[currentFile] = editor.getValue();
-  setStatus("コンパイル開始中...");
-
-  // ZIP生成
-  const zip = new JSZip();
-  for (const [name, content] of Object.entries(files)) {
-    zip.file(name, content);
-  }
-  const zipBlob = await zip.generateAsync({ type: "blob" });
-
-  // ZIP → Base64化（GitHub APIに送るため）
-  const reader = new FileReader();
-  const base64 = await new Promise(resolve => {
-    reader.onload = () => resolve(reader.result.split(",")[1]);
-    reader.readAsDataURL(zipBlob);
-  });
-
-  // ここで GitHub Actions をトリガー
-  // あなたのリポジトリの API エンドポイントに変更する
-  const apiUrl = "https://api.github.com/repos/<YOUR_USERNAME>/<YOUR_REPO>/dispatches";
-
-  const payload = {
-    event_type: "build_request",
-    client_payload: {
-      project_zip: base64
-    }
-  };
-
-  const token = "<YOUR_GITHUB_PAT>"; // 仮: 後で安全な場所から取得する
-
-  try {
-    const res = await fetch(apiUrl, {
+  // workflow_dispatch を呼び出す
+  const res = await fetch(
+    `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/actions/workflows/build.yml/dispatches`,
+    {
       method: "POST",
       headers: {
         "Accept": "application/vnd.github+json",
-        "Authorization": `token ${token}`,
+        "Authorization": `Bearer ${YOUR_PAT}`, // ← 後述
       },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) {
-      setStatus("GitHub Actionsにコンパイルを依頼しました。結果を待っています…");
-    } else {
-      setStatus("エラー: GitHub APIに送信できませんでした");
-      console.error(await res.text());
+      body: JSON.stringify({
+        ref: "main",
+        inputs: { commit_message: "Web build" }
+      })
     }
-  } catch (err) {
-    console.error(err);
-    setStatus("通信エラー");
-  }
-}
+  );
 
-  document.getElementById("uploadBtn").onclick = compileProject;
+  if (res.ok) {
+    log.textContent += "✅ GitHub Actionsにジョブを送信しました。\n";
+  } else {
+    log.textContent += `❌ エラー: ${res.status}\n`;
+  }
+};
 </script>
+
 </body>
 </html>
