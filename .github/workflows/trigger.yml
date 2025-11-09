@@ -1,0 +1,18 @@
+name: Secure Workflow Trigger
+
+on:
+  repository_dispatch:
+    types: [web-build-request]
+
+jobs:
+  trigger_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call build workflow
+        run: |
+          echo "Triggering build via GH_TOKEN"
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/build.yml/dispatches \
+            -d '{"ref":"main","inputs":{"commit_message":"Triggered from web editor"}}'
