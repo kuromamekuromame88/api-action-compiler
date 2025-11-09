@@ -1,47 +1,30 @@
-name: Build PlatformIO Firmware
+name: Web Build (PlatformIO)
 
 on:
-  repository_dispatch:
-    types: [build_request]
+  workflow_dispatch:     # Webエディタから手動トリガーできるようにする
+    inputs:
+      commit_message:
+        description: "Commit message from web editor"
+        required: false
+        default: "Web build triggered"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ リポジトリを取得
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ PlatformIO をセットアップ
       - name: Set up PlatformIO
-        uses: n-vr/setup-platformio@v1
-
-      # 3️⃣ ZIPファイルを受け取って展開
-      - name: Decode and extract uploaded project
         run: |
-          echo "${{ github.event.client_payload.project_zip }}" | base64 --decode > project.zip
-          mkdir project
-          unzip -o project.zip -d project
-          echo "✅ Project extracted:"
-          ls -l project
+          python -m pip install --upgrade platformio
 
-      # 4️⃣ PlatformIOでビルド
       - name: Build firmware
-        working-directory: project
         run: |
-          pio run
+          platformio run
 
-      # 5️⃣ 生成されたBINファイルを確認
-      - name: List built binaries
-        run: |
-          echo "✅ Built files:"
-          find project/.pio/build -name "*.bin"
-
-      # 6️⃣ 成果物をアップロード（ダウンロード用）
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: |
-            project/.pio/build/**/*.bin
+          path: .pio/build/*/*.bin
