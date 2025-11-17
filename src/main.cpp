@@ -6,7 +6,7 @@
 // Define I2S pins for audio output
 #define I2S_BCK_PIN  26  // Bit Clock (BCK)
 #define I2S_WS_PIN   25  // Word Select (WS)
-#define I2S_DOUT_PIN 22  // Data Output (DOUT)
+#define I2S_DOUT_PIN 27  // Data Output (DOUT)
 
 BluetoothA2DPSink a2dpSink;
 
