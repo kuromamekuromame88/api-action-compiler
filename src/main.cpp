@@ -24,8 +24,8 @@ void setup() {
   
   // Set up Bluetooth A2DP sink
   a2dpSink.set_pin_config(pinConfig);
-  a2dpSink.start("ESP32 Speaker");
-  Serial.println("Device name: Bluetooth Speaker");
+  a2dpSink.start("有線イヤホン");
+  Serial.println("Device name: 有線イヤホン");
 }
 
 void loop() {
