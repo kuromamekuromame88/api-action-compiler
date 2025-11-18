@@ -29,5 +29,5 @@ void setup() {
 }
 
 void loop() {
-  // Main loop, nothing specific needed here
+  // メインループ。ここに他に処理させたい事があれば記入
 }
