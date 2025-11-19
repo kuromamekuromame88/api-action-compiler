@@ -38,13 +38,15 @@ int volume = a2dpSink.get_volume();
 
 void loop() {
 
-  if(digitalRead(32)){
+  if(digitalRead(32) == LOW){
     volume = volume-5;
     a2dpSink.set_volume(volume);
+    Serial.println("volume down!");
   }
-  if(digitalRead(33)){
+  if(digitalRead(33) == LOW){
     volume = volume+5;
     a2dpSink.set_volume(volume);
+    Serial.println("volume up!");
   }
 
   //デバイスとの音量の同期
