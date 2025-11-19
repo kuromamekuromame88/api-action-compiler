@@ -31,17 +31,24 @@ void setup() {
   a2dpSink.set_pin_config(pinConfig);
   a2dpSink.start("有線イヤホン");
   Serial.println("Device name: 有線イヤホン");
+  Serial.println("Ready!");
 }
 
-int volume;
+int volume = a2dp_sink.get_volume();
 
 void loop() {
-  // メインループ。ここに他に処理させたい事があれば記入
 
   if(digitalRead(32)){
-    
+    volume = volume-5;
+    a2dpSink.set_volume(volume);
   }
   if(digitalRead(33)){
-    
+    volume = volume+5;
+    a2dpSink.set_volume(volume);
+  }
+
+  //デバイスとの音量の同期
+  if(volume != a2dp_sink.get_volume()){
+    volume = a2dp_sink.get_volume();
   }
 }
