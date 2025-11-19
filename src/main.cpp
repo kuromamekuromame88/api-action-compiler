@@ -13,6 +13,11 @@ BluetoothA2DPSink a2dpSink;
 void setup() {
   Serial.begin(115200);
   Serial.println("Bluetooth Speaker");
+
+  //ボタンのピン設定
+  pinMode(32, INPUT_PULLUP);
+  pinMode(33, INPUT_PULLUP);
+  pinMode(34, INPUT_PULLUP);
   
   // Initialize I2S audio output
   i2s_pin_config_t pinConfig = {
@@ -28,6 +33,15 @@ void setup() {
   Serial.println("Device name: 有線イヤホン");
 }
 
+int volume;
+
 void loop() {
   // メインループ。ここに他に処理させたい事があれば記入
+
+  if(digitalRead(32)){
+    
+  }
+  if(digitalRead(33)){
+    
+  }
 }
