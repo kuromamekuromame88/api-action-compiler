@@ -34,7 +34,7 @@ void setup() {
   Serial.println("Ready!");
 }
 
-int volume = a2dp_sink.get_volume();
+int volume = a2dpSink.get_volume();
 
 void loop() {
 
@@ -48,7 +48,7 @@ void loop() {
   }
 
   //デバイスとの音量の同期
-  if(volume != a2dp_sink.get_volume()){
-    volume = a2dp_sink.get_volume();
+  if(volume != a2dpSink.get_volume()){
+    volume = a2dpSink.get_volume();
   }
 }
